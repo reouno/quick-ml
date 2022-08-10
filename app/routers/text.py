@@ -9,7 +9,7 @@ from libs.text import tokenize as text_tokenize
 router = APIRouter()
 
 
-@router.post('/tokenize')
+@router.post('/tokenize/')
 def tokenize(file: UploadFile):
     """Tokenization"""
     if file:
