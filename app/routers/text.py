@@ -4,8 +4,6 @@ import tempfile
 
 from fastapi import APIRouter, UploadFile
 
-import libs.text.tokenize
-
 router = APIRouter()
 
 
@@ -13,7 +11,7 @@ router = APIRouter()
 def tokenize(file: UploadFile):
     """Tokenization"""
     if file:
-        with tempfile.NamedTemporaryFile(delete=True, dir='.', suffix='.txt') as fp:
+        with tempfile.NamedTemporaryFile(delete=True, dir='', suffix='.txt') as fp:
             shutil.copyfileobj(file.file, fp)
             fp.seek(0)  # important!!
-            return libs.text.tokenize.tokenize(fp.name)
+            return app.libs.text.tokenize.tokenize(fp.name)
