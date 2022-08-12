@@ -3,6 +3,7 @@ import logging
 import subprocess
 from pathlib import Path
 
+from config import settings
 from libs.exceptions import QMLError
 
 logger = logging.getLogger('uvicorn')
@@ -12,7 +13,7 @@ def run(file_path: Path, save_dir_name: Path) -> Path:
     """Execute yolov5"""
     cmd = f'cd libs/vision/yolov5 && python detect.py --source {file_path} --name {save_dir_name}'
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
-    save_dir = Path('./libs/vision/yolov5/runs/detect') / save_dir_name
+    save_dir = settings.YOLOV5_PARENT_DIR / save_dir_name
     saved_file = save_dir / file_path.name
 
     if not saved_file.exists():
