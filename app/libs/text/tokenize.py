@@ -14,7 +14,7 @@ class TokenizationFormat(enum.Enum):
 def tokenize(path: str, result_format: TokenizationFormat = TokenizationFormat.JSON):
     """Tokenize"""
     cmd = f'cat {path} | ginza -m ja_ginza_electra -f {result_format.value}'
-    result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
 
     if result_format == TokenizationFormat.JSON and len(result.stdout) != 0:
         result.stdout = json.loads(result.stdout)
