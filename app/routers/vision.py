@@ -19,18 +19,17 @@ logger = logging.getLogger('uvicorn')
 router = APIRouter()
 
 
-@router.post('/yolov5-detect/')
-def tokenize(file: UploadFile, background_tasks: BackgroundTasks):
+def yolov5_detect(file: UploadFile, background_tasks: BackgroundTasks, is_image: bool):
     """Tokenization"""
     dir_name = uuid.uuid4().hex
-    background_tasks.add_task(shutil.rmtree,  settings.YOLOV5_PARENT_DIR / dir_name)
+    background_tasks.add_task(shutil.rmtree, settings.YOLOV5_PARENT_DIR / dir_name)
     if file:
         _, ext = os.path.splitext(file.filename)
         with tempfile.NamedTemporaryFile(delete=True, dir='', suffix=ext) as fp:
             shutil.copyfileobj(file.file, fp)
             fp.seek(0)  # important!!
             try:
-                return FileResponse(run_yolov5.run(Path(fp.name), dir_name))
+                return FileResponse(run_yolov5.run(Path(fp.name), Path(dir_name), is_image))
             except QMLError as err:
                 logger.error(f'{err}')
                 return JSONResponse(content=to_error_response(str(err), details=err.details), status_code=500)
@@ -38,3 +37,13 @@ def tokenize(file: UploadFile, background_tasks: BackgroundTasks):
         return JSONResponse(
             content=to_error_response('No file uploaded')
         )
+
+
+@router.post('/yolov5-detect-video/')
+def yolov5_detect_video(file: UploadFile, background_tasks: BackgroundTasks):
+    return yolov5_detect(file, background_tasks, False)
+
+
+@router.post('/yolov5-detect-image/')
+def yolov5_detect_image(file: UploadFile, background_tasks: BackgroundTasks):
+    return yolov5_detect(file, background_tasks, True)

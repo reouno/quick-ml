@@ -10,9 +10,9 @@ from libs.exceptions import QMLError
 logger = logging.getLogger('uvicorn')
 
 
-def run(file_path: Path, save_dir_name: Path) -> Path:
+def run(file_path: Path, save_dir_name: Path, is_image: bool) -> Path:
     """Execute yolov5"""
-    if file_path.suffix.upper() == '.MOV':
+    if not is_image and file_path.suffix.upper() == '.MOV':
         mp4_path = file_path.with_suffix('.mp4')
         ffmpeg.input(str(file_path)).output(str(mp4_path)).run(overwrite_output=True, cmd='/usr/bin/ffmpeg')
         file_path = mp4_path
@@ -20,7 +20,8 @@ def run(file_path: Path, save_dir_name: Path) -> Path:
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
     save_dir = settings.YOLOV5_PARENT_DIR / save_dir_name
     saved_file = save_dir / file_path.name
-    saved_file = saved_file.with_suffix('.mp4')
+    if not is_image:
+        saved_file = saved_file.with_suffix('.mp4')
 
     result_info = {
         'cmd': cmd,
