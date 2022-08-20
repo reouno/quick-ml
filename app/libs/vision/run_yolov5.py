@@ -28,7 +28,7 @@ def run(file_path: Path, save_dir_name: Path) -> Path:
         'stderr': result.stderr.decode('utf-8'),
         'saved_file': str(saved_file),
     }
-    logger.info(f'{result_info}')
+    logger.debug(f'{result_info}')
 
     if not saved_file.exists():
         logger.error(f'{result_info}')
