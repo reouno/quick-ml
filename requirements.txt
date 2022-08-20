@@ -1,6 +1,8 @@
 fastapi==0.79.0
+ffmpeg-python
 ginza==5.1.2
 ja-ginza-electra==5.1.2
 python-multipart==0.0.5
 spacy==3.4.1
+torch==1.12.1
 uvicorn==0.18.2

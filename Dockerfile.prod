@@ -1,8 +1,14 @@
-FROM python:3.9-slim
+FROM pytorch/pytorch:1.12.1-cuda11.3-cudnn8-runtime
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y tzdata
+# timezone setting
+ENV TZ=Asia/Tokyo
 
 RUN apt-get update -y && \
-    apt-get install -y libopencv-dev libgl1-mesa-dev
-
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:jonathonf/ffmpeg-4 && \
+    apt-get install -y ffmpeg
 
 COPY requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
