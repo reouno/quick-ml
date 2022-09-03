@@ -203,6 +203,8 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
 
         logger.info('Fine-tuning is successful!')
     except Exception as err:
+        import traceback
+        traceback.print_exc()
         logger.error(err)
     finally:
         shutil.rmtree(tmp_dir)
