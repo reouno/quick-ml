@@ -2,13 +2,14 @@
 
 from fastapi import FastAPI
 
-from routers import text, vision
+from routers import text, vision, debug
 
 app = FastAPI()
 
 router_prefix = '/quick-ml/api'
 app.include_router(text.router, prefix=router_prefix)
 app.include_router(vision.router, prefix=router_prefix)
+app.include_router(debug.router, prefix=f'{router_prefix}/debug')
 
 
 @app.get("/")

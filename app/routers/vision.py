@@ -6,12 +6,14 @@ import tempfile
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import APIRouter, BackgroundTasks, UploadFile, HTTPException, status
+from fastapi.responses import FileResponse, JSONResponse, Response
 
 from config import settings
 from libs.exceptions import QMLError
 from libs.response import to_error_response
+from libs.tasks.image_classification_fine_tuning import fine_tune_image_classifier, ImageClassifierFineTuningParams
+from libs.utils.redis_handler import get_redis_handler
 from libs.vision import run_yolov5
 
 logger = logging.getLogger('uvicorn')
@@ -32,7 +34,10 @@ def yolov5_detect(file: UploadFile, background_tasks: BackgroundTasks, is_image:
                 return FileResponse(run_yolov5.run(Path(fp.name), Path(dir_name), is_image))
             except QMLError as err:
                 logger.error(f'{err}')
-                return JSONResponse(content=to_error_response(str(err), details=err.details), status_code=500)
+                return JSONResponse(
+                    content=to_error_response(str(err), details=err.details),
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
     else:
         return JSONResponse(
             content=to_error_response('No file uploaded')
@@ -47,3 +52,20 @@ def yolov5_detect_video(file: UploadFile, background_tasks: BackgroundTasks):
 @router.post('/yolov5-detect-image/')
 def yolov5_detect_image(file: UploadFile, background_tasks: BackgroundTasks):
     return yolov5_detect(file, background_tasks, True)
+
+
+@router.post('/vision/image/classification/fine-tuning/')
+async def register_image_classifier_fine_tuning_job(
+        params: ImageClassifierFineTuningParams,
+        background_tasks: BackgroundTasks
+):
+    job_lock = get_redis_handler(settings)
+
+    if not job_lock.is_free():
+        raise HTTPException(status_code=423, detail='Server is busy right now.')
+
+    job_lock.register_job_info(params.job_id)
+
+    background_tasks.add_task(fine_tune_image_classifier, params, settings)
+
+    return Response(status_code=status.HTTP_202_ACCEPTED)
