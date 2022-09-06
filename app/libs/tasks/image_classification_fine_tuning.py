@@ -118,7 +118,8 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
             params.remote_workspace_dir, dataset_parent_dir, bucket)
 
         # Determine the number of classes
-        num_classes = len(list((dataset_dir / 'train').glob('*')))
+        classes = [p.name for p in (dataset_dir / 'train').glob('*')]
+        num_classes = len(classes)
 
         # Initialize the model for this run
         model_ft, input_size = initialize_model(
@@ -133,12 +134,24 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]),
+
             'val': transforms.Compose([
                 transforms.Resize(input_size),
                 transforms.CenterCrop(input_size),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]),
+
+            # NOTE: Cannot use Compose if you want to convert this to torch script.
+            # NOTE: You must use Sequential
+            # NOTE: the input data must be Tensor, not PIL image.
+            # NOTE: Cannot use `transforms.Resize`
+            # ref: https://pytorch.org/vision/stable/generated/torchvision.transforms.Compose.html
+            # ref: https://pytorch.org/vision/stable/transforms.html#scriptable-transforms
+            'infer': nn.Sequential(
+                transforms.CenterCrop(input_size),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ),
         }
 
         # Create training and validation datasets
@@ -192,6 +205,8 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
         }
         meta_dict = {
             "params": params.to_dict(),
+            "input_size": input_size,
+            "classes": classes,
             "results": {
                 "epoch": params.num_epochs,
                 "last_epoch_val_loss": float(last_epoch_loss),
@@ -199,7 +214,21 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
             },
             "train_logs": train_logs,
         }
-        upload_trained_model(model_ft, checkpoint, meta_dict, model_dir, remote_model_dir, params, bucket)
+
+        # Inference model class for torch script
+        class TrainedModel(nn.Module):
+            def __init__(self, model: nn.Module, transforms_: nn.Sequential):
+                super().__init__()
+                self.model = model
+                self.transforms = transforms_
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                with torch.no_grad():
+                    x = self.transforms(x)
+                    return self.model(x)
+
+        predictor = TrainedModel(model_ft, data_transforms['infer'])
+        upload_trained_model(predictor, checkpoint, meta_dict, model_dir, remote_model_dir, params, bucket)
 
         logger.info('Fine-tuning is successful!')
     except Exception as err:

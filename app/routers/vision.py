@@ -15,6 +15,7 @@ from libs.response import to_error_response
 from libs.tasks.image_classification_fine_tuning import fine_tune_image_classifier, ImageClassifierFineTuningParams
 from libs.utils.redis_handler import get_redis_handler
 from libs.vision import run_yolov5
+from libs.vision.image.classification import ImageClassificationInferenceParams, image_classification
 
 logger = logging.getLogger('uvicorn')
 
@@ -69,3 +70,14 @@ async def register_image_classifier_fine_tuning_job(
     background_tasks.add_task(fine_tune_image_classifier, params, settings)
 
     return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
+@router.post('/vision/image/classification/inference/')
+def classification_inference(remote_meta_json: str, remote_model_script: str, file: UploadFile):
+    params = ImageClassificationInferenceParams()
+    params.file = file
+    params.remote_meta_json = remote_meta_json
+    params.remote_model_script = remote_model_script
+    result = image_classification(params)
+
+    return result
