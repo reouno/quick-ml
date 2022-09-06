@@ -12,6 +12,7 @@ import torch.nn as nn
 import torch.optim as optim
 from google.cloud.storage import Bucket
 from pydantic import BaseModel
+from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from ulid import new as ulid_new
 
@@ -159,7 +160,7 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
             x: datasets.ImageFolder(os.path.join(dataset_dir, x), data_transforms[x]) for x in ['train', 'val']}
         # Create training and validation dataloaders
         dataloaders_dict = {
-            x: torch.utils.data.DataLoader(image_datasets[x], batch_size=params.batch_size, shuffle=True, num_workers=4)
+            x: DataLoader(image_datasets[x], batch_size=params.batch_size, shuffle=True, num_workers=4)
             for x in ['train', 'val']}
 
         # Detect if we have a GPU available
