@@ -62,6 +62,15 @@ def download_and_extract_dataset(
                     f'Found directories: {dirs}'
                 )
 
+            # Delete all hidden sub directories and files
+            # ex) .DS_Store
+            for sub_obj in Path(dirs[0]).glob('.*'):
+                logger.debug(f'delete sub directory: {sub_obj.name}')
+                if sub_obj.is_dir():
+                    shutil.rmtree(sub_obj)
+                elif sub_obj.is_file():
+                    os.remove(sub_obj)
+
             return Path(dirs[0])
 
 
@@ -119,7 +128,7 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
             params.remote_workspace_dir, dataset_parent_dir, bucket)
 
         # Determine the number of classes
-        classes = [p.name for p in (dataset_dir / 'train').glob('*')]
+        classes = [p.name for p in (dataset_dir / 'train').glob('*') if p.is_dir()]
         num_classes = len(classes)
 
         # Initialize the model for this run
