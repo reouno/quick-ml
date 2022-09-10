@@ -80,6 +80,7 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
             epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
             train_logs.append('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+            print('    {} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # deep copy the model
             if phase == 'val' and epoch_acc > best_acc:

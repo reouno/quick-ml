@@ -94,7 +94,8 @@ class ImageClassifierFineTuningParams(BaseModel):
         }
 
 
-def upload_trained_model(model: nn.Module, checkpoint: dict, meta_dict: dict, model_dir: Path, remote_model_dir: Path,
+def upload_trained_model(model: nn.Module, checkpoint: dict, meta_dict: dict, model_dir: Path,
+                         remote_model_dir: Path,
                          params: ImageClassifierFineTuningParams, bucket: Bucket):
     now = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     checkpoint_file_name = f'{params.model_name}_checkpoint_{now}.pt'
@@ -109,7 +110,8 @@ def upload_trained_model(model: nn.Module, checkpoint: dict, meta_dict: dict, mo
     upload_file_to_gcs(bucket, str(remote_torch_script_file), torch_script_file)
     remote_meta_file = str(remote_model_dir / f'meta_{now}.json')
     upload_string_to_gcs(
-        bucket, remote_meta_file, json.dumps(meta_dict, indent=2), content_type='application/json; charset=utf-8')
+        bucket, remote_meta_file, json.dumps(meta_dict, indent=2),
+        content_type='application/json; charset=utf-8')
 
 
 def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings: Settings):
@@ -166,10 +168,12 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
 
         # Create training and validation datasets
         image_datasets = {
-            x: datasets.ImageFolder(os.path.join(dataset_dir, x), data_transforms[x]) for x in ['train', 'val']}
+            x: datasets.ImageFolder(os.path.join(dataset_dir, x), data_transforms[x]) for x in
+            ['train', 'val']}
         # Create training and validation dataloaders
         dataloaders_dict = {
-            x: DataLoader(image_datasets[x], batch_size=params.batch_size, shuffle=True, num_workers=4)
+            x: DataLoader(image_datasets[x], batch_size=params.batch_size, shuffle=True,
+                          num_workers=4)
             for x in ['train', 'val']}
 
         # Detect if we have a GPU available
@@ -204,7 +208,7 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
         # Train and evaluate
         model_ft, hist, last_epoch_loss, last_epoch_acc, train_logs = train_model(
             model_ft, dataloaders_dict, criterion, optimizer_ft, device,
-            num_epochs=params.num_epochs, is_inception=(params.model_name == "inception"))
+            num_epochs=params.num_epochs, is_inception=(params.model_name == "inceptionv3"))
 
         remote_model_dir = Path(params.remote_workspace_dir) / 'model'
         checkpoint = {
@@ -237,8 +241,21 @@ def fine_tune_image_classifier(params: ImageClassifierFineTuningParams, settings
                     x = self.transforms(x)
                     return self.model(x)
 
-        predictor = TrainedModel(model_ft, data_transforms['infer'])
-        upload_trained_model(predictor, checkpoint, meta_dict, model_dir, remote_model_dir, params, bucket)
+        class TrainedModelI(TrainedModel):
+            """For inception model"""
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                with torch.no_grad():
+                    x = self.transforms(x)
+                    return self.model(x).logits
+
+        model_ft.eval()
+        if params.model_name == 'inceptionv3':
+            predictor = TrainedModelI(model_ft, data_transforms['infer'])
+        else:
+            predictor = TrainedModel(model_ft, data_transforms['infer'])
+        upload_trained_model(predictor, checkpoint, meta_dict, model_dir, remote_model_dir, params,
+                             bucket)
 
         logger.info('Fine-tuning is successful!')
     except Exception as err:
