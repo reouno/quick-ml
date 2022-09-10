@@ -4,7 +4,7 @@ import logging
 import os
 import shutil
 import tempfile
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Dict
 
 import torch.jit
 from PIL import Image
@@ -24,7 +24,7 @@ class ImageClassificationInferenceParams:
     remote_model_script: Optional[str] = None
 
 
-def image_classification(params: ImageClassificationInferenceParams) -> List[Tuple[str, float]]:
+def image_classification(params: ImageClassificationInferenceParams) -> List[Dict[str, float]]:
     """Image classification inference"""
 
     gcs, bucket = get_gcs_and_bucket(settings)
@@ -62,4 +62,8 @@ def image_classification(params: ImageClassificationInferenceParams) -> List[Tup
         pred = model(input_).squeeze(0).softmax(0).tolist()
         logger.debug(f'PREDICTED RESULT: {pred}')
 
-    return list(zip(class_labels, pred))
+    response = []
+    for label, score in zip(class_labels, pred):
+        response.append({'label': label, 'score': score})
+
+    return response
