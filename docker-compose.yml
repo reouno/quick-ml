@@ -18,14 +18,14 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [ gpu ]
-    command: uvicorn main:app --host 0.0.0.0 --port 8001
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --log-level debug
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - GCP_SA_JSON=${GCP_SA_JSON}
       - GCS_BUCKET=${GCS_BUCKET}
     ports:
-      - "8001:8001"
+      - "8002:8002"
     volumes:
       - "./tmp_workspace:/tmp_workspace"
     depends_on:

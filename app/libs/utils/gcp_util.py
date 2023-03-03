@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from typing import Union, Optional, Tuple
 
+from google.cloud import vision
 from google.cloud.storage import Bucket, Blob, Client
 
 from config import Settings
@@ -17,7 +18,9 @@ def get_gcs_and_bucket(settings: Settings) -> Tuple[Client, Bucket]:
     return gcs, bucket
 
 
-def upload_string_to_gcs(bucket: Bucket, path: str, data: str, content_type: str = 'text/plain; charset=utf-8') -> Blob:
+def upload_string_to_gcs(
+        bucket: Bucket, path: str, data: str,
+        content_type: str = 'text/plain; charset=utf-8') -> Blob:
     """Upload string to gcs"""
     blob = bucket.blob(path)
     blob.upload_from_string(data, content_type=content_type)
@@ -32,8 +35,15 @@ def upload_file_to_gcs(bucket: Bucket, path: str, file_path: Union[str, Path],
     return blob
 
 
-def upload_file_obj_to_gcs(bucket: Bucket, path: str, file_obj, content_type: str, **kwargs) -> Blob:
+def upload_file_obj_to_gcs(bucket: Bucket, path: str, file_obj,
+                           content_type: str, **kwargs) -> Blob:
     """Upload file to gcs"""
     blob = bucket.blob(path)
     blob.upload_from_file(file_obj, content_type=content_type, **kwargs)
     return blob
+
+
+def get_vision_client(gcp_sa_json: str) -> vision.ImageAnnotatorClient:
+    """Get Cloud Vision API client"""
+    return vision.ImageAnnotatorClient.from_service_account_info(
+        json.loads(gcp_sa_json))

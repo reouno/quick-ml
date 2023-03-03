@@ -13,6 +13,7 @@ from config import settings
 from libs.exceptions import QMLError
 from libs.response import to_error_response
 from libs.tasks.image_classification_fine_tuning import fine_tune_image_classifier, ImageClassifierFineTuningParams
+from libs.tasks.ocr_batch import OcrBatchParams, ocr_batch_task
 from libs.utils.redis_handler import get_redis_handler
 from libs.vision import run_yolov5
 from libs.vision.image.classification import ImageClassificationInferenceParams, image_classification
@@ -81,3 +82,20 @@ def classification_inference(remote_meta_json: str, remote_model_script: str, fi
     result = image_classification(params)
 
     return result
+
+
+@router.post('/vision/image/ocr/batch/')
+async def register_ocr_batch_task(
+        params: OcrBatchParams,
+        background_tasks: BackgroundTasks
+):
+    job_lock = get_redis_handler(settings)
+
+    if not job_lock.is_free():
+        raise HTTPException(status_code=423, detail='Server is busy right now.')
+
+    job_lock.register_job_info(params.job_id)
+
+    background_tasks.add_task(ocr_batch_task, params, settings)
+
+    return Response(status_code=status.HTTP_202_ACCEPTED)

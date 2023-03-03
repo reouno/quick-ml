@@ -4,7 +4,7 @@ import logging
 import os
 import shutil
 import tempfile
-from typing import Optional, Tuple, List, Dict
+from typing import Optional, List, Dict
 
 import torch.jit
 from PIL import Image
@@ -13,7 +13,7 @@ from google.cloud.storage import Blob
 from torchvision import transforms
 
 from config import settings
-from libs.utils.gcs_util import get_gcs_and_bucket
+from libs.utils.gcp_util import get_gcs_and_bucket
 
 logger = logging.getLogger('uvicorn')
 
@@ -24,7 +24,8 @@ class ImageClassificationInferenceParams:
     remote_model_script: Optional[str] = None
 
 
-def image_classification(params: ImageClassificationInferenceParams) -> List[Dict[str, float]]:
+def image_classification(params: ImageClassificationInferenceParams) -> List[
+    Dict[str, float]]:
     """Image classification inference"""
 
     gcs, bucket = get_gcs_and_bucket(settings)
@@ -45,7 +46,8 @@ def image_classification(params: ImageClassificationInferenceParams) -> List[Dic
         img = Image.open(img_file)
         logger.debug(f'READ IMAGE SIZE: {img.size}')
 
-        model_script_blob = Blob.from_string(params.remote_model_script, client=gcs)
+        model_script_blob = Blob.from_string(params.remote_model_script,
+                                             client=gcs)
         model_script_file = os.path.join(tmpdir, 'model_script.pt')
         with open(model_script_file, 'wb') as fp:
             model_script_blob.download_to_file(fp, client=gcs)

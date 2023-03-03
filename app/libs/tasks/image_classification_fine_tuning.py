@@ -18,7 +18,7 @@ from ulid import new as ulid_new
 
 from config import Settings
 from libs.exceptions import UnexpectedFileTypeError, QMLError
-from libs.utils.gcs_util import get_gcs_and_bucket, upload_file_to_gcs, upload_string_to_gcs
+from libs.utils.gcp_util import get_gcs_and_bucket, upload_file_to_gcs, upload_string_to_gcs
 from libs.utils.image_classification_libs import initialize_model, train_model
 from libs.utils.redis_handler import get_redis_handler
 

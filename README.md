@@ -2,20 +2,21 @@
 
 # Build
 ```
+git submodule update --init --recursive
 docker build -t quick-ml -f Dockerfile.prod .
 ```
 
 # Run
 ```
-docker rm --rm -p 8000:8000 quick-ml
+docker rm --rm -p 8001:8001 quick-ml
 ```
 
 # Usage
-Open http://localhost:8000/docs
+Open http://localhost:8001/docs
 
 ```
 # health check
-curl http://localhost:8000/
+curl http://localhost:8001/
 ```
 
 # Development
