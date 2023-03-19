@@ -10,7 +10,10 @@ RUN apt-get update -y && \
     add-apt-repository -y ppa:jonathonf/ffmpeg-4 && \
     apt-get install -y ffmpeg
 
+RUN apt-get install -y git gcc g++
+
 COPY requirements.txt /requirements.txt
+RUN pip install -U pip wheel cython
 RUN pip install -r /requirements.txt
 
 # For YOLOv5

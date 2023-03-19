@@ -8,6 +8,9 @@ docker build -t quick-ml -f Dockerfile.prod .
 
 # Run
 ```
+# better
+docker compose up --build
+
 docker rm --rm -p 8001:8001 quick-ml
 ```
 
