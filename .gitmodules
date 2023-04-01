@@ -2,3 +2,6 @@
 	path = app/libs/vision/yolov5
 	url = git@github.com:reouno/yolov5.git
 	branch = ffmpeg
+[submodule "app/libs/alpaca.cpp"]
+	path = app/libs/alpaca.cpp
+	url = git@github.com:antimatter15/alpaca.cpp.git

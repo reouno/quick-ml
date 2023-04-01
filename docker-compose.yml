@@ -28,5 +28,6 @@ services:
       - "8002:8002"
     volumes:
       - "./tmp_workspace:/tmp_workspace"
+      - ./models:/models
     depends_on:
       - redis
